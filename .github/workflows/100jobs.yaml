@@ -1,46 +1,58 @@
-name: Create 100 contributions
+name: Create full year contributions
 
 on:
   workflow_dispatch:
 
 jobs:
-  create_100_commits:
+  create_commits_for_year:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
-      - name: Checkout repo
+      - name: Check out
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Configure Git
         run: |
-          git config user.name "andrijajovanovic98"    # Itt add meg a GitHub felhasználóneved
-          git config user.email "andrija.jovanovic1998@gmail.com"         # Fontos, hogy olyan mail legyen, amit a GitHub-fiókodhoz verifikáltál!
+          git config user.name "andrijajovanovic98"
+          git config user.email "andrija.jovanovic1998@gmail.com"
 
-      - name: Make 100 commits
+      - name: Make commits for each day
         run: |
-          # Hozunk létre egy fájlt, amibe minden commitnál írunk valamit
+          # Létrehozzuk a commits.txt fájlt
           touch commits.txt
-          for i in $(seq 1 100)
-          do
-            # A dátumot pl. i nappal ezelőttre állítjuk (így szétszórva a commitokat)
-            # Ha mind a 100-at ugyanarra a napra akarod, elhagyhatod a 'date -d...' részt.
-            COMMIT_DATE=$(date -d "$i days ago" "+%Y-%m-%dT%H:%M:%S")
 
-            echo "Commit #$i at $COMMIT_DATE" >> commits.txt
+          # 365 napra visszamenőleg, mindegyik naphoz 1 commit
+          for i in $(seq 365 -1 1)
+          do
+            COMMIT_DATE=$(date -d "$i days ago" +"%Y-%m-%dT12:00:00")
+            echo "Commit for day $i ($COMMIT_DATE)" >> commits.txt
             git add commits.txt
 
-            # A commit során beállítjuk a dátumot
+            # A commit szerző és committer dátuma is a visszadátumozott idő
             GIT_AUTHOR_DATE="$COMMIT_DATE" \
             GIT_COMMITTER_DATE="$COMMIT_DATE" \
-            git commit -m "Fake commit #$i at $COMMIT_DATE"
+            git commit -m "Day-$i commit at $COMMIT_DATE"
           done
 
-      - name: Push changes
+      - name: Push to new branch
         run: |
-          # A HEAD:main feltételezi, hogy a main branch-re akarsz push-olni
-          # Ha ez védett, akkor lehet, hogy egy másik branch-re kell pusholnod, majd PR-t nyitnod
-          git push origin HEAD:main
+          # Egy új branchre pusholunk, pl. fake-year-commits
+          git push origin HEAD:fake-year-commits
         env:
-          # Ezzel alapból a GITHUB_TOKEN-t fogja használni a push-hoz
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create a Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Ez az az ág, ahova az imént pusholtunk
+          branch: fake-year-commits
+          # Ez pedig a cél ág
+          base: main
+          title: "Fake daily commits for last year"
+          body: "Generate commits for each day of the past year"
+          commit-message: "Add daily commits"
