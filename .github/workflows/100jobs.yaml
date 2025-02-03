@@ -6,49 +6,59 @@ on:
 jobs:
   create_commits_for_year:
     runs-on: ubuntu-latest
+    # Fontos, hogy legyen contents: write, különben nem tud pusholni
     permissions:
       contents: write
+
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v3
         with:
+          # A teljes commit történet letöltése
           fetch-depth: 0
 
       - name: Configure Git
         run: |
+          # Itt add meg a GitHub-profilodhoz verifikált nevet és e-mail címet
           git config user.name "andrijajovanovic98"
           git config user.email "andrija.jovanovic1998@gmail.com"
 
       - name: Make commits for each day
         run: |
-          # Létrehozunk egy commits.txt fájlt,
-          # hogy legyen mit commitolni.
+          # Legyen egy fájl, amit folyamatosan módosítunk, hogy legyen mit commitolni
           touch commits.txt
 
-          # 365 napra visszamenőleg (1 év), 1 commit / nap.
+          # 365 napra visszamenőleg (1 commit / nap)
           for i in $(seq 365 -1 1)
           do
-            # A commit dátuma i nappal ezelőtti napra kerül 12:00:00 időponttal.
+            # A commit dátumát i nappal ezelőttre állítjuk, 12:00 időponttal
             COMMIT_DATE=$(date -d "$i days ago" +"%Y-%m-%dT12:00:00")
-            
+
             echo "Commit for day $i ($COMMIT_DATE)" >> commits.txt
             git add commits.txt
 
-            # Az AUTHOR_DATE és COMMITTER_DATE környezeti változókkal
-            # állítjuk be a commit dátumát.
+            # A szerző és a committer dátumát is átállítjuk
             GIT_AUTHOR_DATE="$COMMIT_DATE" \
             GIT_COMMITTER_DATE="$COMMIT_DATE" \
             git commit -m "Day-$i commit at $COMMIT_DATE"
           done
 
-      - name: Pull (rebase) from origin/main
+      - name: Push to new branch
         run: |
-          # Ha a main branch az alapértelmezett, ezzel felvesszük a legfrissebb változásokat.
-          git pull --rebase origin main
-
-      - name: Push changes
-        run: |
-          # Feltöltés a main branch-re. 
-          git push origin HEAD:main
+          # Egy új branchre (pl. contrib-year) pusholunk,
+          # így nem ütközünk a protected main branch-csel
+          git push origin HEAD:contrib-year
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Ez lesz az új branch neve (ahova az imént pusholtunk)
+          branch: contrib-year
+          # A cél branch (main)
+          base: main
+          title: "Full Year of Commits"
+          body: "This PR adds one commit for each day of the past year."
+          commit-message: "Add daily commits for entire year"
