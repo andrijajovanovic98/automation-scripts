@@ -18,13 +18,11 @@ jobs:
           git config user.name "andrijajovanovic98" 
           git config user.email "andrija.jovanovic1998@gmail.com"
 
-      - name: Fetch latest changes and create a new branch
+      - name: Ensure main branch is up to date
         run: |
           git checkout main
-          git pull origin main
-          # Új branch létrehozása az egyedi commitokhoz
-          BRANCH_NAME="fake-contributions-$(date +%s)"
-          git checkout -b $BRANCH_NAME
+          git fetch origin
+          git pull --rebase origin main
 
       - name: Make 100 commits
         run: |
@@ -32,23 +30,17 @@ jobs:
           for i in $(seq 1 100)
           do
             COMMIT_DATE=$(date -d "$i days ago" "+%Y-%m-%dT%H:%M:%S")
-            
+
             echo "Commit #$i at $COMMIT_DATE" >> commits.txt
             git add commits.txt
-            
+
             GIT_AUTHOR_DATE="$COMMIT_DATE" \
             GIT_COMMITTER_DATE="$COMMIT_DATE" \
             git commit -m "Fake commit #$i at $COMMIT_DATE"
           done
 
-      - name: Push changes to new branch
+      - name: Push changes
         run: |
-          git push origin HEAD:$BRANCH_NAME
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Pull Request
-        run: |
-          gh pr create --base main --head $BRANCH_NAME --title "Fake contributions" --body "This PR contains 100 fake commits."
+          git push --force-with-lease origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
