@@ -18,16 +18,16 @@ jobs:
           git config user.name "andrijajovanovic98" 
           git config user.email "andrija.jovanovic1998@gmail.com"
 
-      - name: Switch to main branch and rebase
+      - name: Fetch latest changes and create a new branch
         run: |
-          # Biztos, ami biztos, ráállunk a main branch-re
           git checkout main
-          # Lehúzzuk a változásokat és rebase-el integráljuk
-          git pull --rebase origin main
+          git pull origin main
+          # Új branch létrehozása az egyedi commitokhoz
+          BRANCH_NAME="fake-contributions-$(date +%s)"
+          git checkout -b $BRANCH_NAME
 
       - name: Make 100 commits
         run: |
-          # Hozunk létre vagy frissítünk egy fájlt, amibe minden commitnál írunk valamit
           touch commits.txt
           for i in $(seq 1 100)
           do
@@ -41,9 +41,14 @@ jobs:
             git commit -m "Fake commit #$i at $COMMIT_DATE"
           done
 
-      - name: Push changes
+      - name: Push changes to new branch
         run: |
-          # Közvetlenül push-olunk a main branch-re
-          git push origin HEAD:main
+          git push origin HEAD:$BRANCH_NAME
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Pull Request
+        run: |
+          gh pr create --base main --head $BRANCH_NAME --title "Fake contributions" --body "This PR contains 100 fake commits."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
