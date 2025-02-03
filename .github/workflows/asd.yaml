@@ -42,7 +42,7 @@ jobs:
 
       - name: Push changes to a new branch
         run: |
-          git push origin $BRANCH_NAME
+          git push -u origin $BRANCH_NAME
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
