@@ -14,8 +14,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config user.name "SajatFelhasznaloNeved"    # Itt add meg a GitHub felhasználóneved
-          git config user.email "email@példád.hu"         # Fontos, hogy olyan mail legyen, amit a GitHub-fiókodhoz verifikáltál!
+          git config user.name "andrijajovanovic98"    # Itt add meg a GitHub felhasználóneved
+          git config user.email "andrija.jovanovic1998@gmail.com"         # Fontos, hogy olyan mail legyen, amit a GitHub-fiókodhoz verifikáltál!
 
       - name: Make 100 commits
         run: |
