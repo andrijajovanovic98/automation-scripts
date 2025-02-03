@@ -40,6 +40,7 @@ jobs:
         run: |
           # A HEAD:main feltételezi, hogy a main branch-re akarsz push-olni
           # Ha ez védett, akkor lehet, hogy egy másik branch-re kell pusholnod, majd PR-t nyitnod
+          git pull
           git push origin HEAD:main
         env:
           # Ezzel alapból a GITHUB_TOKEN-t fogja használni a push-hoz
